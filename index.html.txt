@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cyber OS v2.0 - Hacker Terminal</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+            user-select: none;
+        }
+
+        body {
+            background-color: #000;
+            color: #00ff41;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: radial-gradient(circle, rgba(0, 30, 0, 0.7) 0%, rgba(0, 5, 0, 0.95) 100%),
+                        url('https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=1920&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* --- CİHAZ SEÇİM EKRANI --- */
+        #deviceModal {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 5, 0, 0.95);
+            z-index: 9999;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        #deviceModal h2 {
+            font-size: 22px;
+            color: #00ff41;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #00ff41;
+        }
+
+        .device-btn-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .device-card {
+            border: 2px solid #00ff41;
+            background: #001100;
+            color: #00ff41;
+            padding: 15px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+            transition: all 0.2s;
+        }
+
+        .device-card:hover {
+            background: #00ff41;
+            color: #000;
+            box-shadow: 0 0 25px #00ff41;
+        }
+
+        /* --- HEADER --- */
+        header {
+            background: rgba(0, 15, 0, 0.9);
+            border-bottom: 1px solid #00ff41;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            z-index: 10;
+        }
+
+        .header-title {
+            font-weight: bold;
+            font-size: 14px;
+            letter-spacing: 1px;
+            text-shadow: 0 0 8px #00ff41;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .action-btn, .lang-select {
+            background: #000;
+            color: #00ff41;
+            border: 1px solid #00ff41;
+            padding: 4px 8px;
+            font-family: inherit;
+            font-size: 11px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .action-btn:hover { background: #003300; }
+
+        /* --- WORKSPACE --- */
+        .workspace {
+            flex: 1;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .nsa-logo {
+            width: 280px;
+            height: 280px;
+            border-radius: 50%;
+            border: 4px solid #00ff41;
+            box-shadow: 0 0 30px #00ff41;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 20, 0, 0.85);
+            text-align: center;
+            padding: 20px;
+            pointer-events: none;
+            transition: all 0.3s;
+        }
+
+        .nsa-title { font-size: 15px; font-weight: bold; letter-spacing: 2px; }
+        .nsa-sub { font-size: 10px; margin-top: 8px; opacity: 0.8; letter-spacing: 1px; }
+
+        .icon-grid {
+            position: absolute;
+            right: 30px;
+            top: 30px;
+            display: grid;
+            grid-template-columns: repeat(2, 100px);
+            gap: 15px 12px;
+            transition: all 0.3s;
+        }
+
+        .icon-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .icon-btn:hover { transform: scale(1.08); }
+
+        .icon-box {
+            width: 48px;
+            height: 48px;
+            background: #00ff41;
+            color: #000;
+            border-radius: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 22px;
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.6);
+            margin-bottom: 5px;
+        }
+
+        .icon-label { font-size: 10px; color: #fff; text-shadow: 0 0 5px #000, 0 0 8px #00ff41; text-align: center; }
+
+        /* --- MODAL PENCERELERİ --- */
+        .modal {
+            display: none;
+            position: absolute;
+            width: 90%;
+            max-width: 520px;
+            background: rgba(0, 10, 0, 0.95);
+            border: 2px solid #00ff41;
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.5);
+            z-index: 100;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .modal-header {
+            background: #00ff41;
+            color: #000;
+            padding: 6px 12px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .close-btn {
+            cursor: pointer;
+            background: #000;
+            color: #00ff41;
+            padding: 0 6px;
+            font-weight: bold;
+        }
+
+        .modal-body {
+            padding: 15px;
+            font-size: 12px;
+            min-height: 240px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* GÖZETLEME KAMERA MODÜLÜ (TEK VİDEO) */
+        .cam-video-container {
+            position: relative;
+            width: 100%;
+            height: 210px;
+            border: 1px solid #00ff41;
+            background: #000;
+            overflow: hidden;
+        }
+
+        .cam-video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: contrast(1.1) brightness(0.9) sepia(0.2) hue-rotate(90deg);
+        }
+
+        .cam-overlay {
+            position: absolute;
+            top: 8px; left: 8px; right: 8px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: #00ff41;
+            text-shadow: 0 0 4px #000;
+            pointer-events: none;
+        }
+
+        .rec-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: red;
+            border-radius: 50%;
+            margin-right: 4px;
+            animation: blink 1s infinite;
+        }
+
+        /* GPS ŞEHİR VE YOL HARİTASI */
+        .city-map {
+            width: 100%;
+            height: 210px;
+            background-color: #020d02;
+            border: 1px solid #00ff41;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .road-h {
+            position: absolute;
+            width: 100%;
+            height: 24px;
+            background: #0a220a;
+            border-top: 1px dashed #005511;
+            border-bottom: 1px dashed #005511;
+        }
+
+        .road-v {
+            position: absolute;
+            height: 100%;
+            width: 24px;
+            background: #0a220a;
+            border-left: 1px dashed #005511;
+            border-right: 1px dashed #005511;
+        }
+
+        .building {
+            position: absolute;
+            background: #001e0a;
+            border: 1px solid #00aa22;
+            box-shadow: inset 0 0 8px rgba(0, 255, 65, 0.2);
+            color: #008822;
+            font-size: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        .target-dot {
+            width: 12px;
+            height: 12px;
+            background-color: #ff0000;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            position: absolute;
+            box-shadow: 0 0 12px #ff0000;
+            z-index: 10;
+            transition: all 2.8s linear;
+        }
+
+        /* BITCOIN KAZICI */
+        .miner-bar {
+            height: 15px;
+            background: #002200;
+            border: 1px solid #00ff41;
+            margin-top: 10px;
+            position: relative;
+        }
+
+        .miner-progress {
+            height: 100%;
+            background: #00ff41;
+            width: 0%;
+            transition: width 0.3s;
+            box-shadow: 0 0 10px #00ff41;
+        }
+
+        /* KONSOL / İMLEÇLİ TERMINAL */
+        .terminal-box {
+            background: #000;
+            border: 1px solid #00ff41;
+            height: 200px;
+            padding: 10px;
+            overflow-y: auto;
+            font-size: 11px;
+            color: #00ff41;
+            text-align: left;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 14px;
+            background: #00ff41;
+            margin-left: 2px;
+            animation: blink 0.8s infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .hack-input {
+            background: #000;
+            border: 1px solid #00ff41;
+            color: #00ff41;
+            padding: 6px 10px;
+            width: 100%;
+            font-family: inherit;
+            margin-top: 5px;
+            margin-bottom: 10px;
+            outline: none;
+        }
+
+        /* FOOTER */
+        footer {
+            height: 35px;
+            background: #00ff41;
+            color: #000;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            font-weight: bold;
+            font-size: 13px;
+            z-index: 10;
+        }
+
+        .start-btn {
+            background: #000;
+            color: #00ff41;
+            border: none;
+            padding: 4px 12px;
+            font-weight: bold;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        /* RESPONSIVE DÜZENLER */
+        body.device-phone .nsa-logo {
+            width: 180px; height: 180px;
+            position: absolute; top: 20px;
+        }
+        body.device-phone .nsa-title { font-size: 10px; }
+        body.device-phone .nsa-sub { font-size: 7px; }
+        body.device-phone .icon-grid {
+            position: absolute; bottom: 20px; top: auto; right: 50%;
+            transform: translateX(50%);
+            grid-template-columns: repeat(3, 85px); gap: 10px;
+        }
+        body.device-phone .icon-box { width: 40px; height: 40px; font-size: 18px; }
+
+        body.device-tablet .nsa-logo { width: 220px; height: 220px; }
+        body.device-tablet .icon-grid { right: 20px; top: 20px; grid-template-columns: repeat(2, 90px); }
+    </style>
+</head>
+<body class="device-pc" onkeydown="handleTerminalKey(event)">
+
+    <!-- CİHAZ SEÇİM EKRANI -->
+    <div id="deviceModal">
+        <h2>[ Cyber OS v2.0 ]</h2>
+        <p id="lbl-deviceSub"></p>
+        <div class="device-btn-group">
+            <div class="device-card" id="btn-pc" onclick="setDevice('pc')"></div>
+            <div class="device-card" id="btn-tablet" onclick="setDevice('tablet')"></div>
+            <div class="device-card" id="btn-phone" onclick="setDevice('phone')"></div>
+        </div>
+    </div>
+
+    <header>
+        <div class="header-title">Cyber OS v2.0</div>
+        <div class="header-controls">
+            <button class="action-btn" id="btn-changeDevice" onclick="openDeviceModal()"></button>
+            <button class="action-btn" id="btn-fullscreen" onclick="toggleFullScreen()"></button>
+            <select class="lang-select" id="langSelect" onchange="changeLanguage()">
+                <option value="tr">Türkçe</option>
+                <option value="en">English</option>
+                <option value="ko">한국어 (Korece)</option>
+                <option value="pt_br">Português-BR</option>
+            </select>
+        </div>
+    </header>
+
+    <div class="workspace">
+        <div class="nsa-logo">
+            <div class="nsa-title">CYBER COMMAND CENTER</div>
+            <div class="nsa-sub">SECURE SYSTEM v2.0</div>
+        </div>
+
+        <div class="icon-grid">
+            <div class="icon-btn" onclick="openModal('btc')">
+                <div class="icon-box">B</div>
+                <div class="icon-label" id="lbl-btc"></div>
+            </div>
+            <div class="icon-btn" onclick="openModal('cam')">
+                <div class="icon-box">📷</div>
+                <div class="icon-label" id="lbl-cam"></div>
+            </div>
+            <div class="icon-btn" onclick="openModal('gps')">
+                <div class="icon-box">📍</div>
+                <div class="icon-label" id="lbl-gps"></div>
+            </div>
+            <div class="icon-btn" onclick="openModal('nuke')">
+                <div class="icon-box">☢️</div>
+                <div class="icon-label" id="lbl-nuke"></div>
+            </div>
+            <div class="icon-btn" onclick="openModal('pass')">
+                <div class="icon-box">🔑</div>
+                <div class="icon-label" id="lbl-pass"></div>
+            </div>
+            <div class="icon-btn" onclick="openModal('console')">
+                <div class="icon-box">>_</div>
+                <div class="icon-label" id="lbl-console"></div>
+            </div>
+        </div>
+
+        <div class="modal" id="appModal">
+            <div class="modal-header">
+                <span id="modalTitle">MODÜL</span>
+                <span class="close-btn" onclick="closeModal()">X</span>
+            </div>
+            <div class="modal-body" id="modalContent"></div>
+        </div>
+    </div>
+
+    <footer>
+        <button class="start-btn" onclick="alert('System Ready.')">
+            <span>≡</span> <span id="lbl-start"></span>
+        </button>
+    </footer>
+
+    <script>
+        const i18n = {
+            tr: { 
+                changeDevice: "📱 Cihaz Değiştir", fullscreen: "⛶ Tam Ekran", deviceSub: "Sistem optimizasyonu için cihaz seçin:",
+                btnPc: "💻 Bilgisayar", btnTablet: "📱 Tablet", btnPhone: "📲 Telefon",
+                btc: "Bitcoin Kazıcı", cam: "Banka Kamerası", gps: "GPS Şehir Takibi", nuke: "Nükleer Santral", pass: "Şifre Kırıcı", console: "Program Konsolu", start: "Başla",
+                bankCamTitle: "Banka Güvenlik Kamerası (Kasa Koridoru)",
+                targetNet: "HEDEF AĞ / KULLANICI ADI:", crackBtn: "ŞİFREYİ KIR", scanning: "TARAMA VE BRUTE-FORCE SÜRÜYOR...",
+                successPass: "✔ ŞİFRE BAŞARIYLA KIRILDI: ", consoleInfo: "(Kod akışı için klavyeden yazın)",
+                nukeTitle: "AKKUYU NGS REAKTÖR #1", nukeStatus: "Durum: ÇALIŞIYOR (STABİL)"
+            },
+            en: { 
+                changeDevice: "📱 Switch Device", fullscreen: "⛶ Fullscreen", deviceSub: "Select device for system optimization:",
+                btnPc: "💻 Computer", btnTablet: "📱 Tablet", btnPhone: "📲 Phone",
+                btc: "Bitcoin Miner", cam: "Bank Camera", gps: "GPS City Tracker", nuke: "Nuclear Plant", pass: "Password Cracker", console: "Program Console", start: "Start",
+                bankCamTitle: "Bank Security Camera (Vault Corridor)",
+                targetNet: "TARGET NETWORK / USERNAME:", crackBtn: "CRACK PASSWORD", scanning: "SCANNING & BRUTE-FORCING...",
+                successPass: "✔ PASSWORD CRACKED: ", consoleInfo: "(Type on keyboard for code flow)",
+                nukeTitle: "NUCLEAR REACTOR #1", nukeStatus: "Status: ONLINE (STABLE)"
+            },
+            ko: { 
+                changeDevice: "📱 기기 변경", fullscreen: "⛶ 전체 화면", deviceSub: "시스템 최적화를 위한 기기 선택:",
+                btnPc: "💻 컴퓨터", btnTablet: "📱 태블릿", btnPhone: "📲 스마트폰",
+                btc: "비트코인 채굴기", cam: "은행 카메라", gps: "GPS 도시 추적", nuke: "원자력 발전소", pass: "암호 해독기", console: "프로그램 콘솔", start: "시작",
+                bankCamTitle: "은행 보안 카메라 (금고 복도)",
+                targetNet: "대상 네트워크 / 사용자 이름:", crackBtn: "비밀번호 해독", scanning: "스캔 및 해독 진행 중...",
+                successPass: "✔ 비밀번호 해독 완료: ", consoleInfo: "(코드 출력을 위해 키보드를 누르세요)",
+                nukeTitle: "원자력 발전소 제어 #1", nukeStatus: "상태: 정상 작동 중"
+            },
+            pt_br: { 
+                changeDevice: "📱 Mudar Dispositivo", fullscreen: "⛶ Tela Cheia", deviceSub: "Selecione o dispositivo para otimização:",
+                btnPc: "💻 Computador", btnTablet: "📱 Tablet", btnPhone: "📲 Celular",
+                btc: "Minerador Bitcoin", cam: "Câmera do Banco", gps: "Rastreamento Urbano GPS", nuke: "Usina Nuclear", pass: "Quebrador de Senha", console: "Console do Programa", start: "Iniciar",
+                bankCamTitle: "Câmera de Segurança do Banco (Corredor do Cofre)",
+                targetNet: "REDE / NOME DE USUÁRIO ALVO:", crackBtn: "QUEBRAR SENHA", scanning: "ESCANEO E ATAQUE EM ANDAMENTO...",
+                successPass: "✔ SENHA QUEBRADA COM SUCESSO: ", consoleInfo: "(Digite no teclado para gerar código)",
+                nukeTitle: "REATOR NUCLEAR #1", nukeStatus: "Status: OPERACIONAL"
+            }
+        };
+
+        let currentLang = 'tr';
+        let activeInterval = null;
+        let camClockInterval = null;
+        let isConsoleOpen = false;
+        let currentModalType = '';
+
+        const terminalCodeSnippets = [
+            "import socket, sys, os\nfrom cryptography.fernet import Fernet\n\n# Initializing Cyber OS Kernel Core v2.0\n",
+            "def init_attack_vector(target_ip, port):\n    try:\n        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n",
+            "        s.connect((target_ip, port))\n        s.sendall(b'GET /kernel_exploit HTTP/1.1\\r\\nHost: local\\r\\n\\r\\n')\n",
+            "        response = s.recv(4096)\n        print('[+] Vulnerability Layer Matched: 0x88F02A')\n",
+            "    except Exception as e:\n        print('[-] Connection Bypass Retry...')\n\n",
+            "// Bypassing SSH Encryption Handshake\nfor (int i = 0; i < 256; i++) {\n    inject_payload(0x7000 + i, 'NOP_SLIDE');\n}\n",
+            "[*]" + " Executing Buffer Overflow Attack on Address 0x7FFF5FBFF000...\n",
+            "[+] ROOT ACCESS ACQUIRED! Spawning Shell...\nroot@cyber-os:~# cat /etc/shadow\nroot:$6$vU80$0mGZ1k2a9sL...:18204:0:99999:7:::\n",
+            "[+] Decrypting AES-256 Token Payload...\n[+] Handshake Validated. System Integrity 100%\n"
+        ];
+        let codeSnippetIdx = 0;
+
+        const bankCameraVideo = "https://assets.mixkit.co/videos/preview/mixkit-traffic-in-a-city-at-night-42880-large.mp4";
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedDevice = localStorage.getItem('cyberOS_device');
+            if (savedDevice) {
+                document.body.className = 'device-' + savedDevice;
+            } else {
+                openDeviceModal();
+            }
+            changeLanguage();
+        });
+
+        function openDeviceModal() {
+            document.getElementById('deviceModal').style.display = 'flex';
+        }
+
+        function setDevice(type) {
+            document.body.className = 'device-' + type;
+            localStorage.setItem('cyberOS_device', type);
+            document.getElementById('deviceModal').style.display = 'none';
+        }
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        }
+
+        function changeLanguage() {
+            currentLang = document.getElementById('langSelect').value;
+            const t = i18n[currentLang];
+
+            document.getElementById('btn-changeDevice').innerText = t.changeDevice;
+            document.getElementById('btn-fullscreen').innerText = t.fullscreen;
+            document.getElementById('lbl-deviceSub').innerText = t.deviceSub;
+            document.getElementById('btn-pc').innerText = t.btnPc;
+            document.getElementById('btn-tablet').innerText = t.btnTablet;
+            document.getElementById('btn-phone').innerText = t.btnPhone;
+
+            document.getElementById('lbl-btc').innerText = t.btc;
+            document.getElementById('lbl-cam').innerText = t.cam;
+            document.getElementById('lbl-gps').innerText = t.gps;
+            document.getElementById('lbl-nuke').innerText = t.nuke;
+            document.getElementById('lbl-pass').innerText = t.pass;
+            document.getElementById('lbl-console').innerText = t.console;
+            document.getElementById('lbl-start').innerText = t.start;
+
+            if (currentModalType) openModal(currentModalType);
+        }
+
+        function startPasswordHack() {
+            const targetVal = document.getElementById('targetInput').value || "Wi-Fi_Network";
+            const resDiv = document.getElementById('passResult');
+            const trySpan = document.getElementById('passTry');
+            const percSpan = document.getElementById('passPerc');
+            const t = i18n[currentLang];
+
+            resDiv.innerHTML = `<span style="color:yellow;">${t.scanning}</span>`;
+            let count = 0;
+            const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+
+            if (activeInterval) clearInterval(activeInterval);
+
+            activeInterval = setInterval(() => {
+                count += 5;
+                let passStr = "";
+                for(let i=0; i<10; i++) passStr += chars.charAt(Math.floor(Math.random() * chars.length));
+
+                if (trySpan) {
+                    trySpan.innerText = passStr;
+                    percSpan.innerText = "%" + Math.min(count, 100);
+
+                    if (count >= 100) {
+                        clearInterval(activeInterval);
+                        trySpan.innerText = targetVal + "_Key2026!";
+                        trySpan.style.color = "#00ff41";
+                        resDiv.innerHTML = `<span style="color:#00ff41;">${t.successPass} <b>${targetVal}_Key2026!</b></span>`;
+                    }
+                }
+            }, 120);
+        }
+
+        function handleTerminalKey(e) {
+            if (!isConsoleOpen) return;
+            const term = document.getElementById('terminalText');
+            if (term) {
+                term.innerText += terminalCodeSnippets[codeSnippetIdx % terminalCodeSnippets.length];
+                codeSnippetIdx++;
+                const box = document.getElementById('terminalBox');
+                if (box) box.scrollTop = box.scrollHeight;
+            }
+        }
+
+        function openModal(type) {
+            currentModalType = type;
+            const modal = document.getElementById('appModal');
+            const title = document.getElementById('modalTitle');
+            const content = document.getElementById('modalContent');
+            const t = i18n[currentLang];
+
+            closeModal();
+            modal.style.display = 'block';
+
+            if (type === 'cam') {
+                title.innerText = t.cam;
+                content.innerHTML = `
+                    <div style="margin-bottom: 6px; font-size: 11px; color: #00ff41;">${t.bankCamTitle}</div>
+                    <div class="cam-video-container">
+                        <div class="cam-overlay">
+                            <div><span class="rec-dot"></span><b>REC</b></div>
+                            <div id="camTime">2026-10-08 12:00:00</div>
+                        </div>
+                        <video id="camVideo" autoplay loop muted playsinline>
+                            <source src="${bankCameraVideo}" type="video/mp4">
+                        </video>
+                    </div>
+                `;
+
+                camClockInterval = setInterval(() => {
+                    const now = new Date();
+                    const timeStr = now.toISOString().replace('T', ' ').substring(0, 19);
+                    const timeEl = document.getElementById('camTime');
+                    if (timeEl) timeEl.innerText = timeStr;
+                }, 1000);
+            }
+            else if (type === 'gps') {
+                title.innerText = t.gps;
+                content.innerHTML = `
+                    <div style="margin-bottom: 5px;">SEKTÖR: BEYOĞLU / İSTANBUL</div>
+                    <div class="city-map">
+                        <div class="road-h" style="top: 40px;"></div>
+                        <div class="road-h" style="top: 140px;"></div>
+                        <div class="road-v" style="left: 110px;"></div>
+                        <div class="road-v" style="left: 310px;"></div>
+
+                        <div class="building" style="top: 8px; left: 8px; width: 90px; height: 26px;">BANKA BİNASI</div>
+                        <div class="building" style="top: 8px; left: 145px; width: 150px; height: 26px;">AVM / MERKEZ</div>
+                        <div class="building" style="top: 8px; left: 345px; width: 110px; height: 26px;">REZİDANS B2</div>
+
+                        <div class="building" style="top: 72px; left: 8px; width: 90px; height: 60px;">OTEL COMPLEX</div>
+                        <div class="building" style="top: 72px; left: 145px; width: 70px; height: 60px;">OFİS A</div>
+                        <div class="building" style="top: 72px; left: 225px; width: 70px; height: 60px;">OFİS B</div>
+                        <div class="building" style="top: 72px; left: 345px; width: 110px; height: 60px;">SİBER MERKEZ</div>
+
+                        <div class="building" style="top: 172px; left: 8px; width: 90px; height: 30px;">METRO STN</div>
+                        <div class="building" style="top: 172px; left: 145px; width: 150px; height: 30px;">OTOPARK</div>
+                        <div class="building" style="top: 172px; left: 345px; width: 110px; height: 30px;">DEPO BLOCK</div>
+
+                        <div class="target-dot" id="targetDot" style="top: 46px; left: 116px;"></div>
+                    </div>
+                    <div id="gpsCoords" style="margin-top: 8px; color:#00ff41;">41.0368° N, 28.9775° E | HIZ: 4.5 km/s (Yaya)</div>
+                `;
+
+                let x = 116, y = 46;
+                activeInterval = setInterval(() => {
+                    x += (Math.random() * 10 - 5); 
+                    y += (Math.random() * 10 - 5);
+                    x = Math.max(10, Math.min(440, x));
+                    y = Math.max(10, Math.min(185, y));
+
+                    const dot = document.getElementById('targetDot');
+                    if (dot) {
+                        dot.style.left = x + 'px';
+                        dot.style.top = y + 'px';
+                        document.getElementById('gpsCoords').innerText = `LAT: ${(41.0368 + y/25000).toFixed(4)}° N, LON: ${(28.9775 + x/25000).toFixed(4)}° E | HIZ: ${(3.8 + Math.random()).toFixed(1)} km/s (Yaya)`;
+                    }
+                }, 3000);
+            }
+            else if (type === 'btc') {
+                title.innerText = t.btc;
+                let btcVal = 0.00140;
+                content.innerHTML = `
+                    <div><b>POOL:</b> Pool-EU-04</div>
+                    <div><b>HASH RATE:</b> <span id="hashRate">485.2</span> TH/s</div>
+                    <div style="margin-top: 10px;"><b>TOTAL:</b> <span id="btcTotal" style="color:#fff; font-size:16px;">0.00140</span> BTC</div>
+                    <div class="miner-bar"><div class="miner-progress" id="minerBar"></div></div>
+                `;
+
+                let progress = 0;
+                activeInterval = setInterval(() => {
+                    progress = (progress + 15) % 100;
+                    btcVal += 0.00012;
+                    if (document.getElementById('minerBar')) {
+                        document.getElementById('minerBar').style.width = progress + '%';
+                        document.getElementById('btcTotal').innerText = btcVal.toFixed(5);
+                    }
+                }, 500);
+            }
+            else if (type === 'pass') {
+                title.innerText = t.pass;
+                content.innerHTML = `
+                    <div><b>${t.targetNet}</b></div>
+                    <input type="text" id="targetInput" class="hack-input" placeholder="Örn: Wi-Fi_Ev / Ahmet_Kaya">
+                    <button class="action-btn" style="padding:8px; width:100%;" onclick="startPasswordHack()">${t.crackBtn}</button>
+                    <div style="margin-top:10px; background:#001100; border:1px solid #00ff41; padding:8px; font-size:11px;">
+                        <span>Trying: </span><span id="passTry" style="color:#fff;">---</span> | 
+                        <span>Progress: </span><span id="passPerc">%0</span>
+                    </div>
+                    <div id="passResult" style="margin-top:10px; font-weight:bold; color:yellow;">[READY]</div>
+                `;
+            }
+            else if (type === 'nuke') {
+                title.innerText = t.nuke;
+                content.innerHTML = `
+                    <h3 style="color:#ff0000; margin-bottom:10px;">${t.nukeTitle}</h3>
+                    <p><b>${t.nukeStatus}</b></p>
+                    <p><b>Temp:</b> 310°C | <b>Pressure:</b> 15.2 MPa</p>
+                    <br>
+                    <div style="color:yellow; border:1px dashed yellow; padding:5px;">[ALERT]: Port 8080 open.</div>
+                `;
+            }
+            else if (type === 'console') {
+                isConsoleOpen = true;
+                title.innerText = t.console;
+                content.innerHTML = `
+                    <div style="margin-bottom: 5px; color:#888;">${t.consoleInfo}</div>
+                    <div class="terminal-box" id="terminalBox"><span id="terminalText">root@cyber-os:~# </span><span class="cursor"></span></div>
+                `;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('appModal').style.display = 'none';
+            isConsoleOpen = false;
+            currentModalType = '';
+            if (activeInterval) {
+                clearInterval(activeInterval);
+                activeInterval = null;
+            }
+            if (camClockInterval) {
+                clearInterval(camClockInterval);
+                camClockInterval = null;
+            }
+        }
+    </script>
+</body>
+</html>
